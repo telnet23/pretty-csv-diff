@@ -1,5 +1,5 @@
 import csv
-import math
+
 
 class PrettyCsvDiff:
     def __init__(self, path, pk):
@@ -58,8 +58,8 @@ class PrettyCsvDiff:
         previous = None
 
         while i < len(self._data_a) or j < len(self._data_b):
-            pk_a = self._get_pk(self._data_a[i]) if i < len(self._data_a) else [math.inf]
-            pk_b = self._get_pk(self._data_b[j]) if j < len(self._data_b) else [math.inf]
+            pk_a = self._get_pk(self._data_a[i]) if i < len(self._data_a) else [AlwaysGreater()]
+            pk_b = self._get_pk(self._data_b[j]) if j < len(self._data_b) else [AlwaysGreater()]
 
             next_a = pk_a < pk_b
             next_b = pk_a > pk_b
@@ -82,3 +82,16 @@ class PrettyCsvDiff:
                 if next_b or diff_ab:
                     yield self._formatted('>', self._data_b[j], diff)
                 j += 1
+
+
+class AlwaysGreater:
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        if isinstance(other, AlwaysGreater):
+            return False
+        return True
+
+    def __eq__(self, other):
+        return False
