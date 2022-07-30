@@ -1,18 +1,30 @@
 import csv
+import itertools
+import io
 
 
 class PrettyCsvDiff:
-    def __init__(self, path, pk):
+    def __init__(self, path, pk, encoding=None, **fmtparams):
         self._header = None
         self._maxlen = None
         self._pks = pk
+        self._encoding = encoding
+        self._fmtparams = {k: v for k, v in fmtparams.items() if v is not None}
 
         self._data_a = self._read(path[0])
         self._data_b = self._read(path[1])
 
     def _read(self, path):
-        with open(path, encoding='utf-8') as fp:
-            reader = csv.reader(fp)
+        with open(path, 'r', encoding=self._encoding, newline='') as fp:
+            if 'dialect' not in self._fmtparams:
+                sample = ''.join(next(fp) for _ in range(3))
+                self._fmtparams['dialect'] = csv.Sniffer().sniff(sample)
+
+                # We use itertools.chain and io.StringIO instead of fp.seek
+                # because fp.seek does not work when the input is a pipe.
+                fp = itertools.chain(io.StringIO(sample), fp)
+
+            reader = csv.reader(fp, **self._fmtparams)
 
             if self._header is None:
                 self._header = next(reader)
